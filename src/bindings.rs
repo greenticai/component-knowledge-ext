@@ -369,7 +369,8 @@ pub mod greentic {
         /// text document in a knowledge base, read one back, list a base's documents,
         /// and remove one from a base. The host decides the tenant, the team and which
         /// bases the call may touch; a guest only ever names a base by the name an
-        /// operator sees. Each operation must also be declared by the extension as a
+        /// operator sees. Each operation (`create`, `read`, `list`, `remove`,
+        /// `list-bases`, `search`, `update`) must also be declared by the extension as a
         /// `knowledge://<op>` token in `runtime.permissions.network`.
         #[allow(dead_code, async_fn_in_trait, unused_imports, clippy::all)]
         pub mod knowledge {
@@ -483,6 +484,60 @@ pub mod greentic {
                         .field("document-id", &self.document_id)
                         .field("name", &self.name)
                         .field("size-chars", &self.size_chars)
+                        .finish()
+                }
+            }
+            #[derive(Clone)]
+            pub struct BaseInfo {
+                pub name: _rt::String,
+                pub description: _rt::String,
+                pub document_count: u64,
+            }
+            impl ::core::fmt::Debug for BaseInfo {
+                fn fmt(
+                    &self,
+                    f: &mut ::core::fmt::Formatter<'_>,
+                ) -> ::core::fmt::Result {
+                    f.debug_struct("BaseInfo")
+                        .field("name", &self.name)
+                        .field("description", &self.description)
+                        .field("document-count", &self.document_count)
+                        .finish()
+                }
+            }
+            #[derive(Clone)]
+            pub struct SearchHit {
+                pub document_id: _rt::String,
+                pub name: _rt::String,
+                /// A host-truncated excerpt of the matching text.
+                pub passage: _rt::String,
+                pub score: f32,
+            }
+            impl ::core::fmt::Debug for SearchHit {
+                fn fmt(
+                    &self,
+                    f: &mut ::core::fmt::Formatter<'_>,
+                ) -> ::core::fmt::Result {
+                    f.debug_struct("SearchHit")
+                        .field("document-id", &self.document_id)
+                        .field("name", &self.name)
+                        .field("passage", &self.passage)
+                        .field("score", &self.score)
+                        .finish()
+                }
+            }
+            #[derive(Clone)]
+            pub struct Updated {
+                /// May differ from the id passed in: ids are content hashes.
+                pub document_id: _rt::String,
+            }
+            impl ::core::fmt::Debug for Updated {
+                fn fmt(
+                    &self,
+                    f: &mut ::core::fmt::Formatter<'_>,
+                ) -> ::core::fmt::Result {
+                    f.debug_struct("Updated")
+                        .field("document-id", &self.document_id)
                         .finish()
                 }
             }
@@ -918,6 +973,394 @@ pub mod greentic {
                         _ => _rt::invalid_enum_discriminant(),
                     };
                     result8
+                }
+            }
+            #[allow(unused_unsafe, clippy::all)]
+            /// List the bases this call may use. The host decides the scope.
+            pub fn list_bases() -> Result<_rt::Vec<BaseInfo>, KnowledgeError> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let ptr0 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(
+                        wasm_import_module = "greentic:extension-host/knowledge@0.1.0"
+                    )]
+                    unsafe extern "C" {
+                        #[link_name = "list-bases"]
+                        fn wit_import1(_: *mut u8);
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import1(_: *mut u8) {
+                        unreachable!()
+                    }
+                    unsafe { wit_import1(ptr0) };
+                    let l2 = i32::from(*ptr0.add(0).cast::<u8>());
+                    let result15 = match l2 {
+                        0 => {
+                            let e = {
+                                let l3 = *ptr0
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l4 = *ptr0
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let base12 = l3;
+                                let len12 = l4;
+                                let mut result12 = _rt::Vec::with_capacity(len12);
+                                for i in 0..len12 {
+                                    let base = base12
+                                        .add(i * (8 + 4 * ::core::mem::size_of::<*const u8>()));
+                                    let e12 = {
+                                        let l5 = *base.add(0).cast::<*mut u8>();
+                                        let l6 = *base
+                                            .add(::core::mem::size_of::<*const u8>())
+                                            .cast::<usize>();
+                                        let len7 = l6;
+                                        let bytes7 = _rt::Vec::from_raw_parts(
+                                            l5.cast(),
+                                            len7,
+                                            len7,
+                                        );
+                                        let l8 = *base
+                                            .add(2 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<*mut u8>();
+                                        let l9 = *base
+                                            .add(3 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<usize>();
+                                        let len10 = l9;
+                                        let bytes10 = _rt::Vec::from_raw_parts(
+                                            l8.cast(),
+                                            len10,
+                                            len10,
+                                        );
+                                        let l11 = *base
+                                            .add(4 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<i64>();
+                                        BaseInfo {
+                                            name: _rt::string_lift(bytes7),
+                                            description: _rt::string_lift(bytes10),
+                                            document_count: l11 as u64,
+                                        }
+                                    };
+                                    result12.push(e12);
+                                }
+                                _rt::cabi_dealloc(
+                                    base12,
+                                    len12 * (8 + 4 * ::core::mem::size_of::<*const u8>()),
+                                    8,
+                                );
+                                result12
+                            };
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l13 = i32::from(
+                                    *ptr0.add(::core::mem::size_of::<*const u8>()).cast::<u8>(),
+                                );
+                                let v14 = match l13 {
+                                    0 => KnowledgeError::NotAllowed,
+                                    1 => KnowledgeError::NotFound,
+                                    2 => KnowledgeError::TooLarge,
+                                    3 => KnowledgeError::InvalidMediaType,
+                                    4 => KnowledgeError::QuotaExceeded,
+                                    n => {
+                                        debug_assert_eq!(n, 5, "invalid enum discriminant");
+                                        KnowledgeError::Unavailable
+                                    }
+                                };
+                                v14
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result15
+                }
+            }
+            #[allow(unused_unsafe, clippy::all)]
+            /// Search the base. The host caps `limit` (at most 20) and decides how it
+            /// matches (semantic or lexical).
+            pub fn search(
+                knowledge_base: &str,
+                query: &str,
+                limit: u32,
+            ) -> Result<_rt::Vec<SearchHit>, KnowledgeError> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let vec0 = knowledge_base;
+                    let ptr0 = vec0.as_ptr().cast::<u8>();
+                    let len0 = vec0.len();
+                    let vec1 = query;
+                    let ptr1 = vec1.as_ptr().cast::<u8>();
+                    let len1 = vec1.len();
+                    let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(
+                        wasm_import_module = "greentic:extension-host/knowledge@0.1.0"
+                    )]
+                    unsafe extern "C" {
+                        #[link_name = "search"]
+                        fn wit_import3(
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: i32,
+                            _: *mut u8,
+                        );
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import3(
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                        _: usize,
+                        _: i32,
+                        _: *mut u8,
+                    ) {
+                        unreachable!()
+                    }
+                    unsafe {
+                        wit_import3(
+                            ptr0.cast_mut(),
+                            len0,
+                            ptr1.cast_mut(),
+                            len1,
+                            _rt::as_i32(&limit),
+                            ptr2,
+                        )
+                    };
+                    let l4 = i32::from(*ptr2.add(0).cast::<u8>());
+                    let result20 = match l4 {
+                        0 => {
+                            let e = {
+                                let l5 = *ptr2
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l6 = *ptr2
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let base17 = l5;
+                                let len17 = l6;
+                                let mut result17 = _rt::Vec::with_capacity(len17);
+                                for i in 0..len17 {
+                                    let base = base17
+                                        .add(i * (7 * ::core::mem::size_of::<*const u8>()));
+                                    let e17 = {
+                                        let l7 = *base.add(0).cast::<*mut u8>();
+                                        let l8 = *base
+                                            .add(::core::mem::size_of::<*const u8>())
+                                            .cast::<usize>();
+                                        let len9 = l8;
+                                        let bytes9 = _rt::Vec::from_raw_parts(
+                                            l7.cast(),
+                                            len9,
+                                            len9,
+                                        );
+                                        let l10 = *base
+                                            .add(2 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<*mut u8>();
+                                        let l11 = *base
+                                            .add(3 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<usize>();
+                                        let len12 = l11;
+                                        let bytes12 = _rt::Vec::from_raw_parts(
+                                            l10.cast(),
+                                            len12,
+                                            len12,
+                                        );
+                                        let l13 = *base
+                                            .add(4 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<*mut u8>();
+                                        let l14 = *base
+                                            .add(5 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<usize>();
+                                        let len15 = l14;
+                                        let bytes15 = _rt::Vec::from_raw_parts(
+                                            l13.cast(),
+                                            len15,
+                                            len15,
+                                        );
+                                        let l16 = *base
+                                            .add(6 * ::core::mem::size_of::<*const u8>())
+                                            .cast::<f32>();
+                                        SearchHit {
+                                            document_id: _rt::string_lift(bytes9),
+                                            name: _rt::string_lift(bytes12),
+                                            passage: _rt::string_lift(bytes15),
+                                            score: l16,
+                                        }
+                                    };
+                                    result17.push(e17);
+                                }
+                                _rt::cabi_dealloc(
+                                    base17,
+                                    len17 * (7 * ::core::mem::size_of::<*const u8>()),
+                                    ::core::mem::size_of::<*const u8>(),
+                                );
+                                result17
+                            };
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l18 = i32::from(
+                                    *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<u8>(),
+                                );
+                                let v19 = match l18 {
+                                    0 => KnowledgeError::NotAllowed,
+                                    1 => KnowledgeError::NotFound,
+                                    2 => KnowledgeError::TooLarge,
+                                    3 => KnowledgeError::InvalidMediaType,
+                                    4 => KnowledgeError::QuotaExceeded,
+                                    n => {
+                                        debug_assert_eq!(n, 5, "invalid enum discriminant");
+                                        KnowledgeError::Unavailable
+                                    }
+                                };
+                                v19
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result20
+                }
+            }
+            #[allow(unused_unsafe, clippy::all)]
+            /// Replace a document's text. Returns the document's id afterwards.
+            pub fn update(
+                knowledge_base: &str,
+                document_id: &str,
+                text: &str,
+            ) -> Result<Updated, KnowledgeError> {
+                unsafe {
+                    #[cfg_attr(target_pointer_width = "64", repr(align(8)))]
+                    #[cfg_attr(target_pointer_width = "32", repr(align(4)))]
+                    struct RetArea(
+                        [::core::mem::MaybeUninit<
+                            u8,
+                        >; 3 * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let mut ret_area = RetArea(
+                        [::core::mem::MaybeUninit::uninit(); 3
+                            * ::core::mem::size_of::<*const u8>()],
+                    );
+                    let vec0 = knowledge_base;
+                    let ptr0 = vec0.as_ptr().cast::<u8>();
+                    let len0 = vec0.len();
+                    let vec1 = document_id;
+                    let ptr1 = vec1.as_ptr().cast::<u8>();
+                    let len1 = vec1.len();
+                    let vec2 = text;
+                    let ptr2 = vec2.as_ptr().cast::<u8>();
+                    let len2 = vec2.len();
+                    let ptr3 = ret_area.0.as_mut_ptr().cast::<u8>();
+                    #[cfg(target_arch = "wasm32")]
+                    #[link(
+                        wasm_import_module = "greentic:extension-host/knowledge@0.1.0"
+                    )]
+                    unsafe extern "C" {
+                        #[link_name = "update"]
+                        fn wit_import4(
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                            _: usize,
+                            _: *mut u8,
+                        );
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    unsafe extern "C" fn wit_import4(
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                        _: usize,
+                        _: *mut u8,
+                    ) {
+                        unreachable!()
+                    }
+                    unsafe {
+                        wit_import4(
+                            ptr0.cast_mut(),
+                            len0,
+                            ptr1.cast_mut(),
+                            len1,
+                            ptr2.cast_mut(),
+                            len2,
+                            ptr3,
+                        )
+                    };
+                    let l5 = i32::from(*ptr3.add(0).cast::<u8>());
+                    let result11 = match l5 {
+                        0 => {
+                            let e = {
+                                let l6 = *ptr3
+                                    .add(::core::mem::size_of::<*const u8>())
+                                    .cast::<*mut u8>();
+                                let l7 = *ptr3
+                                    .add(2 * ::core::mem::size_of::<*const u8>())
+                                    .cast::<usize>();
+                                let len8 = l7;
+                                let bytes8 = _rt::Vec::from_raw_parts(
+                                    l6.cast(),
+                                    len8,
+                                    len8,
+                                );
+                                Updated {
+                                    document_id: _rt::string_lift(bytes8),
+                                }
+                            };
+                            Ok(e)
+                        }
+                        1 => {
+                            let e = {
+                                let l9 = i32::from(
+                                    *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<u8>(),
+                                );
+                                let v10 = match l9 {
+                                    0 => KnowledgeError::NotAllowed,
+                                    1 => KnowledgeError::NotFound,
+                                    2 => KnowledgeError::TooLarge,
+                                    3 => KnowledgeError::InvalidMediaType,
+                                    4 => KnowledgeError::QuotaExceeded,
+                                    n => {
+                                        debug_assert_eq!(n, 5, "invalid enum discriminant");
+                                        KnowledgeError::Unavailable
+                                    }
+                                };
+                                v10
+                            };
+                            Err(e)
+                        }
+                        _ => _rt::invalid_enum_discriminant(),
+                    };
+                    result11
                 }
             }
         }
@@ -1937,6 +2380,65 @@ mod _rt {
         let layout = alloc::Layout::from_size_align_unchecked(size, align);
         alloc::dealloc(ptr, layout);
     }
+    pub fn as_i32<T: AsI32>(t: T) -> i32 {
+        t.as_i32()
+    }
+    pub trait AsI32 {
+        fn as_i32(self) -> i32;
+    }
+    impl<'a, T: Copy + AsI32> AsI32 for &'a T {
+        fn as_i32(self) -> i32 {
+            (*self).as_i32()
+        }
+    }
+    impl AsI32 for i32 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for u32 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for i16 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for u16 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for i8 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for u8 {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for char {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
+    impl AsI32 for usize {
+        #[inline]
+        fn as_i32(self) -> i32 {
+            self as i32
+        }
+    }
     #[cfg(target_arch = "wasm32")]
     pub fn run_ctors_once() {
         wit_bindgen_rt::run_ctors_once();
@@ -1982,12 +2484,12 @@ macro_rules! __export_design_extension_impl {
 pub(crate) use __export_design_extension_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[unsafe(
-    link_section = "component-type:wit-bindgen:0.41.0:greentic:knowledge-writer-extension:design-extension:encoded world"
+    link_section = "component-type:wit-bindgen:0.41.0:greentic:knowledge-extension:design-extension:encoded world"
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1833] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xa2\x0d\x01A\x02\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 2103] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xb0\x0f\x01A\x02\x01\
 A\x0f\x01B\x0d\x01m\x04\x06design\x06bundle\x06deploy\x08provider\x04\0\x04kind\x03\
 \0\0\x01r\x03\x02ids\x07versions\x04kind\x01\x04\0\x12extension-identity\x03\0\x02\
 \x01r\x02\x02ids\x07versions\x04\0\x0ecapability-ref\x03\0\x04\x01m\x04\x05error\
@@ -1999,32 +2501,38 @@ internal\x01s\0\x04\0\x0fextension-error\x03\0\x0b\x03\0#greentic:extension-base
 \0\x05level\x03\0\0\x01@\x03\x05level\x01\x06targets\x07messages\x01\0\x04\0\x03\
 log\x01\x02\x01o\x02ss\x01p\x03\x01@\x04\x05level\x01\x06targets\x07messages\x06\
 fields\x04\x01\0\x04\0\x06log-kv\x01\x05\x03\0%greentic:extension-host/logging@0\
-.1.0\x05\x01\x01B\x15\x01q\x06\x0bnot-allowed\0\0\x09not-found\0\0\x09too-large\0\
-\0\x12invalid-media-type\0\0\x0equota-exceeded\0\0\x0bunavailable\0\0\x04\0\x0fk\
-nowledge-error\x03\0\0\x01r\x02\x0bdocument-ids\x07created\x7f\x04\0\x07created\x03\
+.1.0\x05\x01\x01B&\x01q\x06\x0bnot-allowed\0\0\x09not-found\0\0\x09too-large\0\0\
+\x12invalid-media-type\0\0\x0equota-exceeded\0\0\x0bunavailable\0\0\x04\0\x0fkno\
+wledge-error\x03\0\0\x01r\x02\x0bdocument-ids\x07created\x7f\x04\0\x07created\x03\
 \0\x02\x01r\x03\x04names\x04texts\x09truncated\x7f\x04\0\x08document\x03\0\x04\x01\
 r\x03\x0bdocument-ids\x04names\x0asize-charsw\x04\0\x0ddocument-info\x03\0\x06\x01\
-j\x01\x03\x01\x01\x01@\x03\x0eknowledge-bases\x04names\x04texts\0\x08\x04\0\x06c\
-reate\x01\x09\x01j\x01\x05\x01\x01\x01@\x02\x0eknowledge-bases\x0bdocument-ids\0\
-\x0a\x04\0\x04read\x01\x0b\x01p\x07\x01j\x01\x0c\x01\x01\x01@\x01\x0eknowledge-b\
-ases\0\x0d\x04\0\x04list\x01\x0e\x01j\x01\x7f\x01\x01\x01@\x02\x0eknowledge-base\
-s\x0bdocument-ids\0\x0f\x04\0\x06remove\x01\x10\x03\0'greentic:extension-host/kn\
-owledge@0.1.0\x05\x02\x02\x03\0\0\x12extension-identity\x02\x03\0\0\x0ecapabilit\
-y-ref\x01B\x0a\x02\x03\x02\x01\x03\x04\0\x12extension-identity\x03\0\0\x02\x03\x02\
-\x01\x04\x04\0\x0ecapability-ref\x03\0\x02\x01@\0\0\x01\x04\0\x0cget-identity\x01\
-\x04\x01p\x03\x01@\0\0\x05\x04\0\x0bget-offered\x01\x06\x04\0\x0cget-required\x01\
-\x06\x04\0&greentic:extension-base/manifest@0.1.0\x05\x05\x02\x03\0\0\x0fextensi\
-on-error\x01B\x07\x02\x03\x02\x01\x06\x04\0\x0fextension-error\x03\0\0\x01j\0\x01\
-\x01\x01@\x01\x0bconfig-jsons\0\x02\x04\0\x04init\x01\x03\x01@\0\x01\0\x04\0\x08\
-shutdown\x01\x04\x04\0'greentic:extension-base/lifecycle@0.1.0\x05\x07\x01B\x0d\x02\
-\x03\x02\x01\x06\x04\0\x0fextension-error\x03\0\0\x01ks\x01ps\x01k\x03\x01r\x06\x04\
-names\x0bdescriptions\x11input-schema-jsons\x12output-schema-json\x02\x0ccapabil\
-ities\x04\x17agentic-worker-metadata\x02\x04\0\x0ftool-definition\x03\0\x05\x01p\
-\x06\x01@\0\0\x07\x04\0\x0alist-tools\x01\x08\x01j\x01s\x01\x01\x01@\x02\x04name\
-s\x09args-jsons\0\x09\x04\0\x0binvoke-tool\x01\x0a\x04\0%greentic:extension-desi\
-gn/tools@0.2.0\x05\x08\x04\04greentic:knowledge-writer-extension/design-extensio\
-n\x04\0\x0b\x16\x01\0\x10design-extension\x03\0\0\0G\x09producers\x01\x0cprocess\
-ed-by\x02\x0dwit-component\x070.227.1\x10wit-bindgen-rust\x060.41.0";
+r\x03\x04names\x0bdescriptions\x0edocument-countw\x04\0\x09base-info\x03\0\x08\x01\
+r\x04\x0bdocument-ids\x04names\x07passages\x05scorev\x04\0\x0asearch-hit\x03\0\x0a\
+\x01r\x01\x0bdocument-ids\x04\0\x07updated\x03\0\x0c\x01j\x01\x03\x01\x01\x01@\x03\
+\x0eknowledge-bases\x04names\x04texts\0\x0e\x04\0\x06create\x01\x0f\x01j\x01\x05\
+\x01\x01\x01@\x02\x0eknowledge-bases\x0bdocument-ids\0\x10\x04\0\x04read\x01\x11\
+\x01p\x07\x01j\x01\x12\x01\x01\x01@\x01\x0eknowledge-bases\0\x13\x04\0\x04list\x01\
+\x14\x01j\x01\x7f\x01\x01\x01@\x02\x0eknowledge-bases\x0bdocument-ids\0\x15\x04\0\
+\x06remove\x01\x16\x01p\x09\x01j\x01\x17\x01\x01\x01@\0\0\x18\x04\0\x0alist-base\
+s\x01\x19\x01p\x0b\x01j\x01\x1a\x01\x01\x01@\x03\x0eknowledge-bases\x05querys\x05\
+limity\0\x1b\x04\0\x06search\x01\x1c\x01j\x01\x0d\x01\x01\x01@\x03\x0eknowledge-\
+bases\x0bdocument-ids\x04texts\0\x1d\x04\0\x06update\x01\x1e\x03\0'greentic:exte\
+nsion-host/knowledge@0.1.0\x05\x02\x02\x03\0\0\x12extension-identity\x02\x03\0\0\
+\x0ecapability-ref\x01B\x0a\x02\x03\x02\x01\x03\x04\0\x12extension-identity\x03\0\
+\0\x02\x03\x02\x01\x04\x04\0\x0ecapability-ref\x03\0\x02\x01@\0\0\x01\x04\0\x0cg\
+et-identity\x01\x04\x01p\x03\x01@\0\0\x05\x04\0\x0bget-offered\x01\x06\x04\0\x0c\
+get-required\x01\x06\x04\0&greentic:extension-base/manifest@0.1.0\x05\x05\x02\x03\
+\0\0\x0fextension-error\x01B\x07\x02\x03\x02\x01\x06\x04\0\x0fextension-error\x03\
+\0\0\x01j\0\x01\x01\x01@\x01\x0bconfig-jsons\0\x02\x04\0\x04init\x01\x03\x01@\0\x01\
+\0\x04\0\x08shutdown\x01\x04\x04\0'greentic:extension-base/lifecycle@0.1.0\x05\x07\
+\x01B\x0d\x02\x03\x02\x01\x06\x04\0\x0fextension-error\x03\0\0\x01ks\x01ps\x01k\x03\
+\x01r\x06\x04names\x0bdescriptions\x11input-schema-jsons\x12output-schema-json\x02\
+\x0ccapabilities\x04\x17agentic-worker-metadata\x02\x04\0\x0ftool-definition\x03\
+\0\x05\x01p\x06\x01@\0\0\x07\x04\0\x0alist-tools\x01\x08\x01j\x01s\x01\x01\x01@\x02\
+\x04names\x09args-jsons\0\x09\x04\0\x0binvoke-tool\x01\x0a\x04\0%greentic:extens\
+ion-design/tools@0.2.0\x05\x08\x04\0-greentic:knowledge-extension/design-extensi\
+on\x04\0\x0b\x16\x01\0\x10design-extension\x03\0\0\0G\x09producers\x01\x0cproces\
+sed-by\x02\x0dwit-component\x070.227.1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {

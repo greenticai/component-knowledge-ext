@@ -1,5 +1,5 @@
-//! Greentic knowledge-writer design extension: `knowledge_create`,
-//! `knowledge_read`, `knowledge_list` and `knowledge_remove`.
+//! Greentic knowledge design extension: list, search, read, create, update
+//! and remove documents in the calling worker's own knowledge bases.
 //!
 //! All behaviour lives in pure modules behind `host::Host`; this file is only
 //! the WIT export layer plus the adapter that implements `Host` with the real
@@ -86,12 +86,52 @@ impl host::Host for WasmHost {
     ) -> Result<bool, host::KnowledgeError> {
         wit_knowledge::remove(knowledge_base, document_id).map_err(map_error)
     }
+
+    fn list_bases(&self) -> Result<Vec<host::BaseInfo>, host::KnowledgeError> {
+        let rows = wit_knowledge::list_bases().map_err(map_error)?;
+        Ok(rows
+            .into_iter()
+            .map(|b| host::BaseInfo {
+                name: b.name,
+                description: b.description,
+                document_count: b.document_count,
+            })
+            .collect())
+    }
+
+    fn search(
+        &self,
+        knowledge_base: &str,
+        query: &str,
+        limit: u32,
+    ) -> Result<Vec<host::SearchHit>, host::KnowledgeError> {
+        let hits = wit_knowledge::search(knowledge_base, query, limit).map_err(map_error)?;
+        Ok(hits
+            .into_iter()
+            .map(|h| host::SearchHit {
+                document_id: h.document_id,
+                name: h.name,
+                passage: h.passage,
+                score: h.score,
+            })
+            .collect())
+    }
+
+    fn update(
+        &self,
+        knowledge_base: &str,
+        document_id: &str,
+        text: &str,
+    ) -> Result<String, host::KnowledgeError> {
+        let u = wit_knowledge::update(knowledge_base, document_id, text).map_err(map_error)?;
+        Ok(u.document_id)
+    }
 }
 
 impl manifest::Guest for Component {
     fn get_identity() -> types::ExtensionIdentity {
         types::ExtensionIdentity {
-            id: "greentic.knowledge-writer".into(),
+            id: "greentic.knowledge".into(),
             version: env!("CARGO_PKG_VERSION").into(),
             kind: types::Kind::Design,
         }
@@ -99,7 +139,7 @@ impl manifest::Guest for Component {
 
     fn get_offered() -> Vec<types::CapabilityRef> {
         vec![types::CapabilityRef {
-            id: "greentic:knowledge/write".into(),
+            id: "greentic:knowledge/library".into(),
             version: "1.0.0".into(),
         }]
     }
@@ -136,9 +176,12 @@ impl wit_tools::Guest for Component {
     /// an unknown tool name or a local encoding fault.
     fn invoke_tool(name: String, args_json: String) -> Result<String, types::ExtensionError> {
         let value = match name.as_str() {
+            tool_meta::LIST_BASES_TOOL => tools::knowledge_list_bases(&WasmHost, &args_json),
+            tool_meta::SEARCH_TOOL => tools::knowledge_search(&WasmHost, &args_json),
+            tool_meta::UPDATE_TOOL => tools::knowledge_update(&WasmHost, &args_json),
             tool_meta::CREATE_TOOL => tools::knowledge_create(&WasmHost, &args_json),
             tool_meta::READ_TOOL => tools::knowledge_read(&WasmHost, &args_json),
-            tool_meta::LIST_TOOL => tools::knowledge_list(&WasmHost, &args_json),
+            tool_meta::LIST_TOOL => tools::knowledge_list_documents(&WasmHost, &args_json),
             tool_meta::REMOVE_TOOL => tools::knowledge_remove(&WasmHost, &args_json),
             other => {
                 return Err(types::ExtensionError::InvalidInput(format!(

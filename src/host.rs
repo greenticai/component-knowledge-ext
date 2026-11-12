@@ -29,6 +29,23 @@ pub struct DocumentInfo {
     pub size_chars: u64,
 }
 
+/// One base this call may use.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BaseInfo {
+    pub name: String,
+    pub description: String,
+    pub document_count: u64,
+}
+
+/// One search result: a host-truncated excerpt of a matching document.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SearchHit {
+    pub document_id: String,
+    pub name: String,
+    pub passage: String,
+    pub score: f32,
+}
+
 /// The host's closed set of refusals. None carries document text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KnowledgeError {
@@ -53,4 +70,19 @@ pub trait Host {
     fn read(&self, knowledge_base: &str, document_id: &str) -> Result<Document, KnowledgeError>;
     fn list(&self, knowledge_base: &str) -> Result<Vec<DocumentInfo>, KnowledgeError>;
     fn remove(&self, knowledge_base: &str, document_id: &str) -> Result<bool, KnowledgeError>;
+    fn list_bases(&self) -> Result<Vec<BaseInfo>, KnowledgeError>;
+    fn search(
+        &self,
+        knowledge_base: &str,
+        query: &str,
+        limit: u32,
+    ) -> Result<Vec<SearchHit>, KnowledgeError>;
+    /// Replace a document's text. Returns the id afterwards (ids are content
+    /// hashes, so it may differ from the one passed in).
+    fn update(
+        &self,
+        knowledge_base: &str,
+        document_id: &str,
+        text: &str,
+    ) -> Result<String, KnowledgeError>;
 }

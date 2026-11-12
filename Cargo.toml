@@ -1,11 +1,11 @@
 [package]
-name = "greentic-knowledge-writer-extension"
+name = "greentic-knowledge-extension"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.95.0"
 license = "MIT"
 publish = false
-description = "Let an agentic worker create, read, list and remove documents in its knowledge bases, through the host knowledge port"
+description = "Let an agentic worker find, search, read and maintain documents in its own knowledge bases, through the host knowledge port"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -18,7 +18,7 @@ wit-bindgen = "0.41"
 wit-bindgen-rt = "0.41"
 
 [package.metadata.component]
-package = "greentic:knowledge-writer-extension"
+package = "greentic:knowledge-extension"
 
 [package.metadata.component.target]
 path = "wit"

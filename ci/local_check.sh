@@ -2,6 +2,13 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+echo "=== describe.json in step with src/tool_meta.rs ==="
+python3 -I ci/gen_describe.py
+git diff --exit-code -- describe.json
+
+echo "=== regenerate src/bindings.rs from wit/ ==="
+cargo component bindings
+
 echo "=== fmt ==="
 cargo fmt --all -- --check
 

@@ -28,11 +28,11 @@ fn host_failure(e: KnowledgeError) -> Value {
     match e {
         KnowledgeError::NotAllowed => failure(
             codes::NOT_ALLOWED,
-            "not allowed: use the name of a knowledge base bound to this worker",
+            "not allowed: use the exact name of one of this worker's knowledge bases (knowledge_list_bases lists them)",
         ),
         KnowledgeError::NotFound => failure(
             codes::NOT_FOUND,
-            "no document with that id is in that knowledge base",
+            "no document with that id is in that knowledge base; call knowledge_list_documents for current ids",
         ),
         KnowledgeError::TooLarge => failure(
             codes::TOO_LARGE,
@@ -90,6 +90,25 @@ struct ListArgs {
     knowledge_base: String,
 }
 
+#[derive(Deserialize)]
+struct SearchArgs {
+    knowledge_base: String,
+    query: String,
+    limit: Option<u32>,
+}
+
+#[derive(Deserialize)]
+struct UpdateArgs {
+    knowledge_base: String,
+    document_id: String,
+    text: String,
+}
+
+/// Search results returned when `limit` is omitted.
+pub const DEFAULT_SEARCH_LIMIT: u32 = 5;
+/// The host's own cap; a larger `limit` is refused rather than silently cut.
+pub const MAX_SEARCH_LIMIT: u32 = 20;
+
 fn run(f: impl FnOnce() -> Result<Value, Value>) -> Value {
     f().unwrap_or_else(|failure| failure)
 }
@@ -120,7 +139,7 @@ pub fn knowledge_read(host: &dyn Host, args_json: &str) -> Value {
 }
 
 #[must_use]
-pub fn knowledge_list(host: &dyn Host, args_json: &str) -> Value {
+pub fn knowledge_list_documents(host: &dyn Host, args_json: &str) -> Value {
     run(|| {
         let a: ListArgs = parse(args_json)?;
         let base = required("knowledge_base", &a.knowledge_base)?;
@@ -143,5 +162,57 @@ pub fn knowledge_remove(host: &dyn Host, args_json: &str) -> Value {
         let id = required("document_id", &a.document_id)?;
         let removed = host.remove(base, id).map_err(host_failure)?;
         Ok(json!({ "ok": true, "removed": removed }))
+    })
+}
+
+#[must_use]
+pub fn knowledge_list_bases(host: &dyn Host, _args_json: &str) -> Value {
+    run(|| {
+        let bases = host.list_bases().map_err(host_failure)?;
+        let bases: Vec<Value> = bases
+            .into_iter()
+            .map(|b| {
+                json!({ "name": b.name, "description": b.description, "document_count": b.document_count })
+            })
+            .collect();
+        Ok(json!({ "ok": true, "bases": bases }))
+    })
+}
+
+#[must_use]
+pub fn knowledge_search(host: &dyn Host, args_json: &str) -> Value {
+    run(|| {
+        let a: SearchArgs = parse(args_json)?;
+        let base = required("knowledge_base", &a.knowledge_base)?;
+        let query = required("query", &a.query)?;
+        let limit = a.limit.unwrap_or(DEFAULT_SEARCH_LIMIT);
+        if !(1..=MAX_SEARCH_LIMIT).contains(&limit) {
+            return Err(failure(
+                codes::INVALID_INPUT,
+                &format!("limit must be between 1 and {MAX_SEARCH_LIMIT}"),
+            ));
+        }
+        let hits = host.search(base, query, limit).map_err(host_failure)?;
+        let hits: Vec<Value> = hits
+            .into_iter()
+            .map(|h| {
+                json!({ "document_id": h.document_id, "name": h.name, "passage": h.passage, "score": h.score })
+            })
+            .collect();
+        Ok(json!({ "ok": true, "hits": hits }))
+    })
+}
+
+#[must_use]
+pub fn knowledge_update(host: &dyn Host, args_json: &str) -> Value {
+    run(|| {
+        let a: UpdateArgs = parse(args_json)?;
+        let base = required("knowledge_base", &a.knowledge_base)?;
+        let id = required("document_id", &a.document_id)?;
+        if a.text.trim().is_empty() {
+            return Err(failure(codes::INVALID_INPUT, "text is blank"));
+        }
+        let new_id = host.update(base, id, &a.text).map_err(host_failure)?;
+        Ok(json!({ "ok": true, "document_id": new_id }))
     })
 }

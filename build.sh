@@ -7,7 +7,7 @@ cd "$HERE"
 echo "==> cargo component build"
 cargo component build --release --target wasm32-wasip2
 
-WASM_PATH="${CARGO_TARGET_DIR:-target}/wasm32-wasip2/release/greentic_knowledge_writer_extension.wasm"
+WASM_PATH="${CARGO_TARGET_DIR:-target}/wasm32-wasip2/release/greentic_knowledge_extension.wasm"
 if [ ! -f "$WASM_PATH" ]; then
   echo "ERROR: wasm not found at $WASM_PATH" >&2
   exit 1
@@ -27,7 +27,7 @@ mv "$STAGE/describe.json.tmp" "$STAGE/describe.json"
 EXT_ID="$(jq -r .metadata.id "$STAGE/describe.json")"
 EXT_VERSION="$(jq -r .metadata.version "$STAGE/describe.json")"
 OUT="$HERE/${EXT_ID}-${EXT_VERSION}.gtxpack"
-TMP_ZIP="$STAGE/../greentic_knowledge_writer_$$.zip"
+TMP_ZIP="$STAGE/../greentic_knowledge_$$.zip"
 (cd "$STAGE" && zip -r "$TMP_ZIP" .) > /dev/null
 mv "$TMP_ZIP" "$OUT"
 

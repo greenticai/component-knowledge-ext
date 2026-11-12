@@ -179,7 +179,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "greentic-knowledge-writer-extension"
+name = "greentic-knowledge-extension"
 version = "0.1.0"
 dependencies = [
  "serde",

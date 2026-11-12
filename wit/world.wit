@@ -1,4 +1,4 @@
-package greentic:knowledge-writer-extension;
+package greentic:knowledge-extension;
 
 world design-extension {
   import greentic:extension-base/types@0.1.0;
