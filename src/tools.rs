@@ -28,7 +28,7 @@ fn host_failure(e: KnowledgeError) -> Value {
     match e {
         KnowledgeError::NotAllowed => failure(
             codes::NOT_ALLOWED,
-            "this worker may not use that knowledge base; use the name of a base bound to the worker",
+            "not allowed: use the name of a knowledge base bound to this worker",
         ),
         KnowledgeError::NotFound => failure(
             codes::NOT_FOUND,
