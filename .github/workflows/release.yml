@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  push:
+    branches: [main, develop, research]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Extension version to (re)publish. Required.'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    name: Detect version bump
+    runs-on: ubuntu-latest
+    outputs:
+      should_publish: ${{ steps.diff.outputs.should_publish }}
+      version: ${{ steps.diff.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Diff version in Cargo.toml
+        id: diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          MANIFEST=Cargo.toml
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          extract_version() {
+            git show "$1:${MANIFEST}" 2>/dev/null \
+              | awk -F\" '/^version = /{print $2; exit}' || echo ""
+          }
+          NEW=$(extract_version HEAD)
+          OLD=$(extract_version HEAD~1)
+          echo "  HEAD~1 version: ${OLD:-<none>}"
+          echo "  HEAD   version: ${NEW:-<none>}"
+
+          # A commit with no previous version (the repo's first commit) is a
+          # scaffold, not a release: publishing it would ship before the
+          # designer side that serves the knowledge port is integrated.
+          if [ -z "$OLD" ]; then
+            echo "==> No previous version — first commit, skipping publish"
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "$NEW" ] || [ "$NEW" = "$OLD" ]; then
+            echo "==> No version bump — skipping"
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Per-branch version-suffix policy: research -> -research, develop -> -dev, main -> stable.
+          case "${GITHUB_REF_NAME}" in
+            research)
+              if [[ ! "$NEW" =~ -research(\.[0-9A-Za-z-]+)*$ ]]; then
+                echo "::error::research expects a -research version; got $NEW"; exit 1
+              fi ;;
+            develop)
+              if [[ ! "$NEW" =~ -dev(\.[0-9A-Za-z-]+)*$ ]]; then
+                echo "::error::develop expects a -dev version; got $NEW"; exit 1
+              fi ;;
+            main)
+              if [[ "$NEW" =~ - ]]; then
+                echo "::error::main expects a stable version (no prerelease suffix); got $NEW"; exit 1
+              fi ;;
+          esac
+
+          echo "==> Publishing ${NEW}"
+          echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          echo "version=${NEW}" >> "$GITHUB_OUTPUT"
+
+  ci:
+    name: CI gate
+    needs: detect
+    if: needs.detect.outputs.should_publish == 'true'
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publish .gtxpack to Greentic Store
+    needs: [detect, ci]
+    if: needs.detect.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: greenticai/greentic-designer-extension-action@v2
+        with:
+          gtdx-version: "=1.2.25"
+          manifest: Cargo.toml
+          store-url: https://store.greentic.cloud
+          store-token: ${{ secrets.GREENTIC_STORE_TOKEN }}
+          version: ${{ needs.detect.outputs.version }}
+          # The Store signs on ingest with this publisher's own key (the one
+          # hosts pin in trust/publishers.json) and replaces describe.json in
+          # the artifact, so there is no client key to pass. The action's
+          # "no host can load it" warning does not apply to a Store publish.
+          allow-unsigned: true

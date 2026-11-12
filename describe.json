@@ -1,0 +1,120 @@
+{
+  "$schema": "https://store.greentic.cloud/schemas/describe-v2.json",
+  "apiVersion": "greentic.ai/v2",
+  "kind": "DesignExtension",
+  "compat": {
+    "min_designer_version": ">=1.2.0",
+    "min_runner_version": "^0.12.0",
+    "contract_version": "1.2.0"
+  },
+  "metadata": {
+    "id": "greentic.knowledge-writer",
+    "name": "Knowledge writer",
+    "version": "0.1.0",
+    "summary": "Let an agentic worker create, read, list and remove documents in its own knowledge bases",
+    "description": "Design extension exposing four agentic-worker tools: knowledge_create, knowledge_read, knowledge_list and knowledge_remove. They call the host knowledge port (greentic:extension-host/knowledge@0.1.0): the designer decides the tenant, the team and which bases the worker may touch (the bases bound to the worker); the tool only names a base by its name. Text documents only (plain text, markdown, CSV, JSON). Remove drops a document from the base and keeps the library copy. Requires a designer that provides the knowledge port; v1 serves it in Test chat only.",
+    "author": {
+      "name": "Greentic",
+      "email": "team@greentic.ai"
+    },
+    "license": "MIT",
+    "repository": "https://github.com/greenticai/component-knowledge-writer-ext",
+    "keywords": [
+      "knowledge",
+      "knowledge-base",
+      "documents",
+      "agentic-worker",
+      "design-extension"
+    ]
+  },
+  "capabilities": {
+    "offered": [
+      {
+        "id": "greentic:knowledge/write",
+        "version": "1.0.0"
+      }
+    ],
+    "required": []
+  },
+  "runtime": {
+    "memoryLimitMB": 64,
+    "permissions": {
+      "network": [
+        "knowledge://create",
+        "knowledge://read",
+        "knowledge://list",
+        "knowledge://remove"
+      ],
+      "secrets": [],
+      "callExtensionKinds": []
+    },
+    "components": {
+      "knowledge-writer": {
+        "gtpack": {
+          "file": "extension.wasm",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "pack_id": "greentic.knowledge-writer",
+          "component_version": "0.1.0"
+        },
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "world": "greentic:knowledge-writer-extension/design-extension@0.1.0"
+      }
+    }
+  },
+  "contributions": {
+    "tools": [
+      {
+        "name": "knowledge_create",
+        "export": "greentic:extension-design/tools.invoke-tool",
+        "runtime_ref": "knowledge-writer",
+        "capabilities": [
+          "cap://knowledge/create",
+          "agentic_worker"
+        ],
+        "description": "Create a text document in one of this worker's knowledge bases.",
+        "input_schema": "{\"type\":\"object\",\"required\":[\"knowledge_base\",\"name\",\"text\"],\"properties\":{\"knowledge_base\":{\"type\":\"string\",\"description\":\"Name of a knowledge base bound to this worker, exactly as shown on the Knowledge page\"},\"name\":{\"type\":\"string\",\"description\":\"Display name of the new document\"},\"text\":{\"type\":\"string\",\"description\":\"Document text: plain text, markdown, CSV or JSON\"}}}",
+        "output_schema": "{\"type\":\"object\",\"required\":[\"ok\"],\"properties\":{\"ok\":{\"type\":\"boolean\"},\"document_id\":{\"type\":\"string\"},\"created\":{\"type\":\"boolean\",\"description\":\"false when an identical document already existed and was reused\"},\"error\":{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\"},\"message\":{\"type\":\"string\"}}}}}",
+        "secret_requirements": []
+      },
+      {
+        "name": "knowledge_read",
+        "export": "greentic:extension-design/tools.invoke-tool",
+        "runtime_ref": "knowledge-writer",
+        "capabilities": [
+          "cap://knowledge/read",
+          "agentic_worker"
+        ],
+        "description": "Read one document of one of this worker's knowledge bases.",
+        "input_schema": "{\"type\":\"object\",\"required\":[\"knowledge_base\",\"document_id\"],\"properties\":{\"knowledge_base\":{\"type\":\"string\",\"description\":\"Name of a knowledge base bound to this worker\"},\"document_id\":{\"type\":\"string\",\"description\":\"Id from knowledge_list or knowledge_create\"}}}",
+        "output_schema": "{\"type\":\"object\",\"required\":[\"ok\"],\"properties\":{\"ok\":{\"type\":\"boolean\"},\"name\":{\"type\":\"string\"},\"text\":{\"type\":\"string\"},\"truncated\":{\"type\":\"boolean\"},\"error\":{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\"},\"message\":{\"type\":\"string\"}}}}}",
+        "secret_requirements": []
+      },
+      {
+        "name": "knowledge_list",
+        "export": "greentic:extension-design/tools.invoke-tool",
+        "runtime_ref": "knowledge-writer",
+        "capabilities": [
+          "cap://knowledge/list",
+          "agentic_worker"
+        ],
+        "description": "List the documents of one of this worker's knowledge bases.",
+        "input_schema": "{\"type\":\"object\",\"required\":[\"knowledge_base\"],\"properties\":{\"knowledge_base\":{\"type\":\"string\",\"description\":\"Name of a knowledge base bound to this worker\"}}}",
+        "output_schema": "{\"type\":\"object\",\"required\":[\"ok\"],\"properties\":{\"ok\":{\"type\":\"boolean\"},\"documents\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"document_id\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"size_chars\":{\"type\":\"integer\"}}}},\"error\":{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\"},\"message\":{\"type\":\"string\"}}}}}",
+        "secret_requirements": []
+      },
+      {
+        "name": "knowledge_remove",
+        "export": "greentic:extension-design/tools.invoke-tool",
+        "runtime_ref": "knowledge-writer",
+        "capabilities": [
+          "cap://knowledge/remove",
+          "agentic_worker"
+        ],
+        "description": "Remove a document from one of this worker's knowledge bases (the library copy is kept).",
+        "input_schema": "{\"type\":\"object\",\"required\":[\"knowledge_base\",\"document_id\"],\"properties\":{\"knowledge_base\":{\"type\":\"string\",\"description\":\"Name of a knowledge base bound to this worker\"},\"document_id\":{\"type\":\"string\",\"description\":\"Id from knowledge_list or knowledge_create\"}}}",
+        "output_schema": "{\"type\":\"object\",\"required\":[\"ok\"],\"properties\":{\"ok\":{\"type\":\"boolean\"},\"removed\":{\"type\":\"boolean\",\"description\":\"false when the document was not in that base\"},\"error\":{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\"},\"message\":{\"type\":\"string\"}}}}}",
+        "secret_requirements": []
+      }
+    ]
+  }
+}

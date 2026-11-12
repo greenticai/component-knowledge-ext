@@ -1,0 +1,20 @@
+name: validate-describe
+on:
+  push:
+    paths: ["describe.json", ".github/workflows/validate-describe.yml"]
+  pull_request:
+    paths: ["describe.json", ".github/workflows/validate-describe.yml"]
+jobs:
+  govern:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.95.0
+      - uses: Swatinem/rust-cache@v2
+      - name: Validate describe.json governance
+        uses: greenticai/greentic-designer-sdk/.github/actions/validate-extension@research
+        with:
+          dir: "."
+          # Same gtdx as the release job (crates.io 1.2.25, the active dev lane).
+          # Keep the two pins in step; verify a new tag is committed by GitHub.
+          gtdx-ref: v1.2.25
