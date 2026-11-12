@@ -24,6 +24,22 @@ fn failure(code: &str, message: &str) -> Value {
     json!({ "ok": false, "error": { "code": code, "message": message } })
 }
 
+/// `unavailable` for every operation but search: the host could not do it
+/// now. It does not say why, so neither does this.
+pub const UNAVAILABLE_MESSAGE: &str =
+    "the knowledge operation could not be completed right now; try again later";
+/// `unavailable` from search: most often the base has no embedding or search
+/// setup yet, which the host does not distinguish from an outage.
+pub const SEARCH_UNAVAILABLE_MESSAGE: &str = "the search could not be completed right now; searching needs an embedding or search setup on the knowledge base (it must be prepared for search). Use knowledge_list_documents and knowledge_read instead, or try again later";
+
+/// Like [`host_failure`], with search's own `unavailable` sentence.
+fn search_failure(e: KnowledgeError) -> Value {
+    match e {
+        KnowledgeError::Unavailable => failure(codes::UNAVAILABLE, SEARCH_UNAVAILABLE_MESSAGE),
+        other => host_failure(other),
+    }
+}
+
 fn host_failure(e: KnowledgeError) -> Value {
     match e {
         KnowledgeError::NotAllowed => failure(
@@ -46,10 +62,7 @@ fn host_failure(e: KnowledgeError) -> Value {
             codes::QUOTA_EXCEEDED,
             "the workspace knowledge quota is exhausted",
         ),
-        KnowledgeError::Unavailable => failure(
-            codes::UNAVAILABLE,
-            "knowledge storage is not available here; it works in Test chat on a designer that provides it",
-        ),
+        KnowledgeError::Unavailable => failure(codes::UNAVAILABLE, UNAVAILABLE_MESSAGE),
     }
 }
 
@@ -192,7 +205,7 @@ pub fn knowledge_search(host: &dyn Host, args_json: &str) -> Value {
                 &format!("limit must be between 1 and {MAX_SEARCH_LIMIT}"),
             ));
         }
-        let hits = host.search(base, query, limit).map_err(host_failure)?;
+        let hits = host.search(base, query, limit).map_err(search_failure)?;
         let hits: Vec<Value> = hits
             .into_iter()
             .map(|h| {

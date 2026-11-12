@@ -12,7 +12,7 @@
     "name": "Knowledge",
     "version": "0.1.0",
     "summary": "Let an agentic worker list, search, read, create, update and remove documents in its own knowledge bases",
-    "description": "Design extension exposing seven agentic-worker tools: knowledge_list_bases, knowledge_search, knowledge_list, knowledge_read, knowledge_create, knowledge_update and knowledge_remove. They call the host knowledge port (greentic:extension-host/knowledge@0.1.0): the designer decides the tenant, the team and which bases the worker may touch (the bases bound to the worker); a tool only names a base by its name. Text documents only (plain text, markdown, CSV, JSON). Remove drops a document from the base and keeps the library copy. Requires a designer that provides the knowledge port; v1 serves it in Test chat only.",
+    "description": "Design extension exposing seven agentic-worker tools: knowledge_list_bases, knowledge_search, knowledge_list_documents, knowledge_read, knowledge_create, knowledge_update and knowledge_remove. They call the host knowledge port (greentic:extension-host/knowledge@0.1.0): the designer decides the tenant, the team and which bases the worker may touch (the bases bound to the worker); a tool only names a base by its name. Text documents only (plain text, markdown, CSV, JSON). Remove drops a document from the base and keeps the library copy. Requires a designer that provides the knowledge port; v1 serves it in Test chat only.",
     "author": {
       "name": "Greentic",
       "email": "team@greentic.ai"

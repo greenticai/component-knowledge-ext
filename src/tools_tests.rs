@@ -161,6 +161,27 @@ fn list_bases_search_and_update_pass_their_arguments_through() {
 }
 
 #[test]
+fn an_unavailable_answer_never_claims_a_lane_and_search_names_its_setup() {
+    let h = MockHost::failing(KnowledgeError::Unavailable);
+    let search = knowledge_search(&h, r#"{"knowledge_base":"KB","query":"q"}"#);
+    assert_eq!(search["error"]["code"], "unavailable");
+    let msg = search["error"]["message"].as_str().unwrap();
+    assert!(msg.contains("embedding or search setup"), "{msg}");
+    assert!(msg.contains("could not be completed right now"), "{msg}");
+    let others = [
+        knowledge_list_bases(&h, "{}"),
+        knowledge_create(&h, r#"{"knowledge_base":"KB","name":"n","text":"t"}"#),
+        knowledge_read(&h, r#"{"knowledge_base":"KB","document_id":"d"}"#),
+    ];
+    for out in others.iter().chain(std::iter::once(&search)) {
+        assert_eq!(out["error"]["code"], "unavailable");
+        let m = out["error"]["message"].as_str().unwrap();
+        assert!(!m.contains("Test chat"), "{m}");
+        assert!(m.contains("could not be completed right now"), "{m}");
+    }
+}
+
+#[test]
 fn a_search_limit_outside_one_to_twenty_is_refused_not_cut() {
     let h = MockHost::default();
     for limit in [0, 21] {

@@ -44,7 +44,10 @@ Every tool returns JSON with `ok`. A failure is a value, never a trap:
 `{"ok":false,"error":{"code":"…","message":"…"}}`, with `code` one of
 `invalid_input`, `not_allowed`, `not_found`, `too_large`,
 `invalid_media_type`, `quota_exceeded`, `unavailable`. A `limit` outside 1-20
-is refused (`invalid_input`), not silently cut.
+is refused (`invalid_input`), not silently cut. `unavailable` means the host
+could not complete the operation right now; from `knowledge_search` it most
+often means the base has no embedding or search setup yet (it must be prepared
+for search), and the message says so.
 
 ## Where it works
 
