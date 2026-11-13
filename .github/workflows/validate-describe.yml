@@ -15,6 +15,6 @@ jobs:
         uses: greenticai/greentic-designer-sdk/.github/actions/validate-extension@research
         with:
           dir: "."
-          # Same gtdx as the release job (crates.io 1.2.25, the active dev lane).
+          # Same gtdx as the release job (crates.io 1.2.27, the active dev lane).
           # Keep the two pins in step; verify a new tag is committed by GitHub.
-          gtdx-ref: v1.2.25
+          gtdx-ref: v1.2.27
