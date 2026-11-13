@@ -101,7 +101,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: greenticai/greentic-designer-extension-action@v2
         with:
-          gtdx-version: "=1.2.25"
+          gtdx-version: "=1.2.27"
           manifest: Cargo.toml
           store-url: https://store.greentic.cloud
           store-token: ${{ secrets.GREENTIC_STORE_TOKEN }}
